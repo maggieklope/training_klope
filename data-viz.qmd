@@ -1,0 +1,165 @@
+---
+title: "Intro to Data Viz"
+format: html
+editor: visual
+---
+
+## Set up
+```{r}
+#| message: false
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(janitor)
+library(scales)
+library(leaflet)
+library(DT)
+```
+
+## Read Data
+```{r}
+#| message: false
+
+escape_raw <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e")
+```
+
+## Explore Data
+```{r}
+#| eval: false
+
+# column names
+colnames(escape_raw)
+
+# peak at columns and classes
+glimpse(escape_raw)
+
+# look at date range
+range(escape_raw$sampleDate)
+
+# look at species
+unique(escape_raw$Species)
+```
+
+## Data Cleaning
+
+Cleaning column names:
+```{r}
+# using janitor::clean_names()
+escape <- escape_raw %>%
+  clean_names()
+
+# reformat columns to the snake naming convention
+colnames(escape)
+```
+
+Calculate annual escapement by species and region
+```{r}
+annual_esc <- escape %>% 
+  separate(sample_date, c("year", "month", "day"),sep = "-") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  group_by(species, sasap_region, year) %>% 
+  summarise(escapement = sum(daily_count)) %>% 
+  filter(species %in% c("Chinook", "Sockeye", "Chum", "Coho", "Pink"))
+
+# can check to see if filter worked
+unique(annual_esc$species)
+
+head(annual_esc)
+```
+
+## Plotting with ggplot2
+
+Same plot, multiple ways
+```{r}
+# Option 1: 
+ggplot(annual_esc, aes(x = species, y = escapement))+
+  geom_col()
+
+# Option 2:
+ggplot(annual_esc)+
+  geom_col(aes(x = species, y = escapement))
+
+# Option 3:
+ggplot()+
+  geom_col(data = annual_esc,
+           aes(x = species, y = escapement))
+```
+
+### Customization
+
+trying to make columns blue
+```{r}
+ggplot(annual_esc, aes(x = species, y = escapement, fill = "blue")) + 
+  geom_col()
+```
+
+Why doesn't it work? Because the fill argument was inside the aesthetic function. It didn't find anything named fill in the data, so it created a column named and assigned everything to be "blue"
+
+```{r}
+ggplot(annual_esc, aes(x = species, y = escapement)) + 
+  geom_col(fill = "blue")
+
+```
+Filling bars by region
+```{r}
+ggplot(annual_esc,
+       aes(x = species, y = escapement,
+           fill = sasap_region)) +
+    geom_col()
+```
+So reminder:
+- if you want to map a variable onto a graph aesthetic, but within the aes()
+if you want to update your plot based on a constant, you can add the information directly to the geom layer
+
+### Creating multiple Plots
+
+filtering data
+```{r}
+# subsetting data from years 2000-2016
+annual_esc_2000s <- annual_esc %>% 
+  filter(year %in% c(2000:2016))
+```
+
+making plot
+```{r}
+ggplot(annual_esc_2000s, aes(x = year, y = escapement, color = species))+
+  geom_line() +
+  geom_point() + 
+  facet_wrap(~sasap_region,
+             scales = "free_y") +
+  labs(title = "Annual Salmon Escapement by Region", y = "Escapement") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+```
+
+Can create own theme:
+```{r}
+my_theme <- theme_light() +
+    theme(legend.position = "bottom",
+          legend.title = element_blank(),
+          axis.text.x = element_text(angle = 45, # making year text diagonal
+                                     vjust = 0.5))
+
+ggplot(annual_esc_2000s,
+       aes(x = year,
+           y = escapement,
+           color = species)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ sasap_region,
+                scales = "free_y") +
+  labs(title = "Annual Salmon Escapement by Region",
+       y = "Escapement") +
+  my_theme +
+  scale_y_continuous(labels = comma) # converts sci notation to number with comma
+```
+Saving plot
+```{r}
+ggsave("figures/annualsalmon_esc_region.jpg",
+       width = 8,
+       height = 6,
+       units = "in")
+```
