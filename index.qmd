@@ -8,7 +8,7 @@ editor: visual
 
 -   Literate Analysis
 -   [Cleaning and Wrangling Data](tidying.html)
--   Data Visualization
+-   [Data Visualization](data-viz.html)
 -   Functions and Packages
 
 ## Course Practice Sessions
