@@ -5,11 +5,13 @@ editor: visual
 ---
 
 ## Course Lessons
-- Literate Analysis
-- [Cleaning and Wrangling Data](tidying.html)
-- Data Visualization
-- Functions and Packages
+
+-   Literate Analysis
+-   [Cleaning and Wrangling Data](tidying.html)
+-   Data Visualization
+-   Functions and Packages
 
 ## Course Practice Sessions
-- Practice 1
-- Practice 2
+
+-   Practice 1
+-   Practice 2
