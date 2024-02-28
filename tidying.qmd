@@ -13,11 +13,14 @@ library(readr)
 ```
 
 ## Read in our data
+
 ```{r}
 
 catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
 ```
+
 ## Explore
+
 ```{r}
 colnames(catch_original)
 
@@ -30,11 +33,10 @@ unique(catch_original$Region)
 
 # Clean and Reshape Data
 
-%>%
- Apple shortcut: Cmd + Shift + M
- Windows shortcut: Ctrl + Shift + M
+%\>% Apple shortcut: Cmd + Shift + M Windows shortcut: Ctrl + Shift + M
 
 ## Using select() function
+
 ```{r}
 catch_data <- catch_original %>% 
   select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
@@ -46,11 +48,13 @@ head(catch_data)
 ```
 
 ## check column types
+
 ```{r}
 glimpse(catch_data)
 ```
 
 ## Replace values in a column
+
 ```{r}
 # change chinook column to numeric
 catch_clean <- catch_data %>% 
@@ -76,6 +80,7 @@ catch_clean[i,]
 ```
 
 ## Reshaping
+
 ```{r}
 head(catch_clean)
 
@@ -96,6 +101,7 @@ head(catch_wide)
 ```
 
 ## Rename columns with rename()
+
 ```{r}
 catch_long <- catch_long %>%
   rename(catch_thousands = catch)
@@ -111,6 +117,7 @@ head(catch_long)
 ```
 
 ## Summary stats using group_by() and summize()
+
 ```{r}
 # get average catch by region
 mean_region <- catch_long %>% 
@@ -130,12 +137,12 @@ head(n_region)
 ```
 
 ## Filtering rows using filter()
+
 ```{r}
 sse_catch <- catch_long %>% 
   filter(Region == "SSE")
 head(sse_catch)
 ```
-
 
 ```{r}
 # filter to catches over one million fish
@@ -148,7 +155,9 @@ chinook_sse <- catch_long %>%
 
 head(chinook_sse)
 ```
+
 ## Sorting data using arrange()
+
 ```{r}
 mean_region <- catch_long %>% 
   group_by(Region) %>% 
@@ -164,6 +173,7 @@ head(mean_region)
 ```
 
 ## split and combine values in columns
+
 ```{r}
 sites_df <- data.frame(site = c("HAW-101",
                                 "HAW-103",
@@ -177,6 +187,7 @@ split_df <- sites_df %>%
 head(split_df)
 
 ```
+
 ```{r}
 cities_df <- data.frame(city = c("Junea AK",
                                  "Sitka AK",
@@ -199,22 +210,3 @@ dates_unite <- date_df %>%
 head(dates_unite)
 
 ```
-
-```{r}
-catch_original <- catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
-
-mean_region <- catch_original %>% 
-  select(-All, -notesRegCode) %>% 
-  mutate(Chinook = efelse(Chinook = "I", 1, Chinook)) %>% 
-  mutate(Chinook = as.numeric(Chinook)) %>% 
-  pivot_longer(-c(Region, Year),
-               names_to = "species",
-               values_to = "catch") %>% 
-  mutate(catch = catch *1000) %>% 
-  group_by(Region) %>% 
-  summarize(mean_catch = mean(catch)) %>% 
-  arrange(desc(mean_catch)
-
-
-```
-
