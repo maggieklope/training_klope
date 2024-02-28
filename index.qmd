@@ -4,4 +4,12 @@ format: html
 editor: visual
 ---
 
-Hello World!
+## Course Lessons
+- Literate Analysis
+- [Cleaning and Wrangling Data](tidying.html)
+- Data Visualization
+- Functions and Packages
+
+## Course Practice Sessions
+- Practice 1
+- Practice 2
