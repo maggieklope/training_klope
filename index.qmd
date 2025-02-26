@@ -1,17 +1,5 @@
 ---
-title: "Github Pages Example"
+title: "index"
 format: html
-editor: visual
 ---
 
-## Course Lessons
-
--   Literate Analysis
--   [Cleaning and Wrangling Data](tidying.html)
--   [Data Visualization](data-viz.html)
--   Functions and Packages
-
-## Course Practice Sessions
-
--   Practice 1
--   Practice 2
