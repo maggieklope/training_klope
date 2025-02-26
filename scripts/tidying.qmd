@@ -15,11 +15,13 @@ library(readr)
 # Data Sources
 
 ## Read in our data
+
 ```{r}
 catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
 ```
 
 ## Explore
+
 ```{r}
 # print column names
 colnames(catch_original)
@@ -51,10 +53,13 @@ head(catch_data)
 ```
 
 ## check column types
+
 ```{r}
 glimpse(catch_data)
 ```
+
 ## Replace values in a column with mutate()
+
 ```{r}
 # change Chinook column to numeric
 catch_clean <- catch_data %>% 
@@ -83,6 +88,7 @@ catch_clean[i,]
 ```
 
 ## Changing shape using pivolt_longer() and pivot_wider()
+
 ```{r}
 head(catch_clean)
 
@@ -103,6 +109,7 @@ head(catch_wide)
 ```
 
 ## rename columns with rename()
+
 ```{r}
 catch_long <- catch_long %>% 
   rename(catch_thousands = catch)
@@ -117,6 +124,7 @@ head(catch_long)
 ```
 
 ## summary statistics using group_by() and summarize()
+
 ```{r}
 # get average catch by region
 mean_region <- catch_long %>% 
@@ -133,6 +141,7 @@ head(n_region)
 ```
 
 ## Filtering rows using filter()
+
 ```{r}
 sse_catch <- catch_long %>% 
   filter(Region == "SSE")
@@ -151,6 +160,7 @@ head(chinook_sse)
 ```
 
 ## Sorting data with arrange()
+
 ```{r}
 mean_region <- catch_long %>% 
   group_by(Region) %>% 
@@ -165,7 +175,8 @@ mean_region <- catch_long %>%
 
 ```
 
-## split and combine values in columns 
+## split and combine values in columns
+
 ```{r}
 sites_df <- data.frame(site = c("HAW-101",
                                  "HAW-103",
@@ -190,8 +201,8 @@ dates_unite <- date_df %>%
 head(dates_unite)
 ```
 
-
 ## now all together
+
 ```{r}
 catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
 
@@ -214,7 +225,7 @@ head(mean_region)
 ```
 
 ## save your results with write_csv()
+
 ```{r}
 write_csv(mean_region, here::here("data/mean_catch_by_region.csv"))
 ```
-
