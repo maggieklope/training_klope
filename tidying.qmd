@@ -12,6 +12,8 @@ library(tidyr)
 library(readr)
 ```
 
+# Data Sources
+
 ## Read in our data
 
 ```{r}
@@ -22,16 +24,24 @@ catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/d
 ## Explore
 
 ```{r}
+#Prints the column names of my data frame
 colnames(catch_original)
 
+# First 6 lines of the data frame
 head(catch_original)
 
+# Summary of each column of data
 summary(catch_original)
 
+# Prints unique values in a column (in this case, the region)
 unique(catch_original$Region)
+
+#View() in console
 ```
 
 # Clean and Reshape Data
+
+refer to the book
 
 %\>% Apple shortcut: Cmd + Shift + M Windows shortcut: Ctrl + Shift + M
 
@@ -51,14 +61,17 @@ head(catch_data)
 
 ```{r}
 glimpse(catch_data)
+# does anything seem amiss?
+# we see that the values for 'Chinook' are actually character, and not a number
 ```
 
-## Replace values in a column
+## Replace values in a column using mutate()
 
 ```{r}
 # change chinook column to numeric
 catch_clean <- catch_data %>% 
   mutate(Chinook = as.numeric(Chinook))
+# we get an error though, can anyone figure out why?
 ```
 
 ```{r}
@@ -75,11 +88,13 @@ catch_clean <- catch_data %>%
                            true = "1",
                            false = Chinook),
          Chinook = as.numeric(Chinook))
+
+# double-check
 catch_clean[i,]
 
 ```
 
-## Reshaping
+## Changing shape using pivot_longer() and pivot_wider()
 
 ```{r}
 head(catch_clean)
@@ -111,7 +126,8 @@ head(catch_long)
 
 ```{r}
 catch_long <- catch_long %>% 
-  mutate(catch = catch_thousands * 1000)
+  mutate(catch = catch_thousands * 1000) %>% 
+  select(-catch_thousands)
 
 head(catch_long)
 ```
@@ -144,6 +160,8 @@ sse_catch <- catch_long %>%
 head(sse_catch)
 ```
 
+### exercise
+
 ```{r}
 # filter to catches over one million fish
 catch_million <- catch_long %>% 
@@ -152,6 +170,8 @@ catch_million <- catch_long %>%
 # filter to just Chinook for SSE
 chinook_sse <- catch_long %>% 
   filter(Region == "SSE" & species == "Chinook")
+
+# note on ==, a logical test that if true keeps the row
 
 head(chinook_sse)
 ```
@@ -163,6 +183,7 @@ mean_region <- catch_long %>%
   group_by(Region) %>% 
   summarise(mean_catch = mean(catch)) %>% 
   arrange(mean_catch)
+head(mean_region)
 
 mean_region <- catch_long %>% 
   group_by(Region) %>% 
@@ -188,10 +209,14 @@ head(split_df)
 
 ```
 
+### Exercise
+
 ```{r}
 cities_df <- data.frame(city = c("Junea AK",
                                  "Sitka AK",
                                  "Anchorage AK"))
+
+# split into two columns: city and state_code:
 cities_df <- cities_df %>% 
   separate(city, c("city", "state_code"), " ")
 
@@ -209,4 +234,30 @@ dates_unite <- date_df %>%
   unite(date, year, month, day, sep = "-")
 head(dates_unite)
 
+```
+
+## Now all together:
+
+```{r}
+catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
+
+mean_region <- catch_original %>%
+  select(-All, -notesRegCode) %>% 
+  mutate(Chinook = if_else(Chinook == "I", "1", Chinook)) %>% 
+  mutate(Chinook = as.numeric(Chinook)) %>% 
+  pivot_longer(-c(Region, Year), 
+               names_to = "species", 
+               values_to = "catch") %>%
+  mutate(catch = catch * 1000) %>% 
+  group_by(Region) %>% 
+  summarize(mean_catch = mean(catch)) %>% 
+  arrange(desc(mean_catch))
+
+head(mean_region)
+```
+
+## Save your results with write_csv()
+
+```{r}
+write_csv(mean_region, here::here("data/mean_catch_by_region.csv"))
 ```
