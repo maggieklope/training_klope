@@ -4,6 +4,7 @@ format: html
 bibliography: references.bib
 ---
 
+
 # Introduction
 
 ## About the data
@@ -18,6 +19,7 @@ bibliography: references.bib
 
 library(readr)
 library(here)
+
 ```
 
 ## Read in data

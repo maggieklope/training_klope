@@ -4,12 +4,23 @@ format: html
 editor: visual
 ---
 
+Data that we work with is often never in the correct format, so sometimes needs to be reorganized. Sometimes it needs some tidying up to fix small formatting errors or typos. Today we'll be looking at functions from the dplyr and tidyr packages that can help a lot with this process. 
+
+Out of curiosity, who has experience with these packages?
+
+
+
 ```{r}
 #| message: false
 
 library(dplyr)
 library(tidyr)
 library(readr)
+
+# discuss the message that we receive from dplyr
+# there are functions in the stat package and the dplyr package that share the same name. It's informing us that the one from dplyr is masking the one from the stats package, so R will assume you are using the dplyr filter
+# if you are doing an analysis where you want to use the filter function from the stats package, you would need to specify with the package_name::function()
+
 ```
 
 # Data Sources
@@ -17,10 +28,13 @@ library(readr)
 ## Read in our data
 
 ```{r}
+#| message: false
+
 catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
 ```
 
 ## Explore
+Similar to what we did in the Quarto lesson, it's a good idea to take a look at the data that we just read in to familiarize ourselves with it
 
 ```{r}
 # print column names
@@ -37,15 +51,31 @@ unique(catch_original$Region)
 
 ```
 
+## The Pipe Operator %>%
+Both tidyr and dplyr use the pipe operator which chains operations together
+
+If you think fo the assignment operator (<-) as reading like "gets" then the pipe operator would read like “then”.
+
+RStudio has a keyboard shortcut for %>%:
+Windows: Ctrl + Shift + M
+Mac: cmd + shift + M
+
+I want to also briefly address that there is a base R pipe operator that looks like |>. This was introduced a few years ago, and I was trying to do some research before this course about the difference between them, and found forum posts where a lot of people who thought about it a lot more than me were 
+
+
 # Cleaning & Reshaping
+The All and notesRegCode columns are extra and not needed for our analysis, so we're going to remove them with the select() function
 
 ## Using the select() function
 
 ```{r}
+
+# to select columns you want
 catch_data <- catch_original %>% 
   select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
 head(catch_data)
 
+# to drop columns (with -) that you don't want
 catch_data <- catch_original %>% 
   select(-All, -notesRegCode)
 head(catch_data)
@@ -58,7 +88,11 @@ head(catch_data)
 glimpse(catch_data)
 ```
 
-## Replace values in a column with mutate()
+## Changing column contents with  mutate()
+
+Can use the mutate() function to change a column, or to create a new one. 
+
+First, let’s try to convert the Chinook catch values to numeric type using the as.numeric() function, and overwrite the old Chinook column.
 
 ```{r}
 # change Chinook column to numeric
@@ -67,13 +101,18 @@ catch_clean <- catch_data %>%
 
 ```
 
+We get a warning "NAs introduced by coercion" which is R telling us that it couldn’t convert every value to an integer and, for those values it couldn’t convert, it put an NA in its place
+
+To investigate, let’s isolate the issue. We can find out which values are NAs with a combination of is.na() and which(), and save that to a variable called i.
 ```{r}
 # find NA values
 is.na(catch_clean$Chinook)
 
+# get the location of the NA value
 i <- which(is.na(catch_clean$Chinook))
 i
 
+# look at that row
 catch_data[i,]
 
 catch_clean <- catch_data %>% 
@@ -89,6 +128,14 @@ catch_clean[i,]
 
 ## Changing shape using pivolt_longer() and pivot_wider()
 
+The next issue is that the data are in a wide format and we want the data in a long format instead. The function pivot_longer() from the tidyr package helps us do this conversion. If you do not remember all the arguments that go into pivot_longer() you can always call the help page by typing ?pivot_longer in the console.
+
+- The first argument to pivot_longer is the columns over which we are pivoting. You can select these by listing either the names of the columns you do want to pivot, or in this case, the names of the columns you are not pivoting over.
+
+- The names_to argument: this is the name of the column that you are creating from the column names of the columns you are pivoting over.
+
+- The values_to argument: the name of the column that you are creating from the values in the columns you are pivoting over.
+
 ```{r}
 head(catch_clean)
 
@@ -100,6 +147,8 @@ head(catch_long)
 
 ```
 
+
+The opposite of pivot_longer() is the pivot_wider() function. It works in a similar declarative fashion:
 ```{r}
 catch_wide <- catch_long %>% 
   pivot_wider(names_from = species,
@@ -110,11 +159,19 @@ head(catch_wide)
 
 ## rename columns with rename()
 
+If you scan through the data, you may notice the values in the catch column are very small (these are supposed to be annual catches). If we look at the metadata we can see that the catch column is in thousands of fish, so let’s convert it before moving on.
+
+Let’s first rename the catch column to be called catch_thousands:
+
 ```{r}
 catch_long <- catch_long %>% 
   rename(catch_thousands = catch)
 head(catch_long)
 ```
+
+## Adding column using mutate()
+
+Now let’s use mutate() again to create a new column called 'catch' with units of fish (instead of thousands of fish).
 
 ```{r}
 catch_long <- catch_long %>% 
@@ -124,6 +181,14 @@ head(catch_long)
 ```
 
 ## summary statistics using group_by() and summarize()
+
+Go to the book to review split - apply- combine
+
+1. group_by(Region): this is telling R to split the dataframe and create a group for each different value in the column Region. R just keeps track of the groups, it doesn’t return separate dataframes per region.
+
+2. mean(catch): here mean is the function we want to apply to the column catch in each group.
+
+3. summarize(catch = mean(catch)) the function summarize() is used to combine the results of mean(catch) in each group into a single table. The argument mean_catch = mean(catch) indicates that the column having the results of mean(catch) will be named mean_catch.
 
 ```{r}
 # get average catch by region
@@ -142,10 +207,16 @@ head(n_region)
 
 ## Filtering rows using filter()
 
+We use the filter() function to filter our data.frame to rows matching some condition. It’s similar to subset() from base R.
+
+Let’s go back to our original data.frame and do some filter()ing:
+
 ```{r}
 sse_catch <- catch_long %>% 
   filter(Region == "SSE")
 head(sse_catch)
+
+# have the students try what's below
 
 # filter to where catches were over 1 million fish
 catch_million <- catch_long %>% 
@@ -161,13 +232,22 @@ head(chinook_sse)
 
 ## Sorting data with arrange()
 
+The arrange() function is used to sort the rows of a data.frame. Two common cases to use arrange() are:
+
+- To calculate a cumulative sum so row order matters
+- To display a table (like in an .qmd document) in sorted order
+
+Let’s re-calculate mean catch by region, and then arrange() the output by mean catch:
+
 ```{r}
 mean_region <- catch_long %>% 
   group_by(Region) %>% 
   summarise(mean_catch = mean(catch)) %>% 
-  arrange(mean_catch)
+  arrange(mean_catch) # defautls to ascending order
+
 head(mean_region)
 
+# can use the desc() function to change to descending order 
 mean_region <- catch_long %>% 
   group_by(Region) %>% 
   summarise(mean_catch = mean(catch)) %>% 
@@ -175,7 +255,34 @@ mean_region <- catch_long %>%
 
 ```
 
+## Combine datasets together with join()
+```{r}
+region_defs <- read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1") %>% 
+    select(code, mgmtArea)
+
+head(region_defs)
+```
+
+```{r}
+catch_joined <- left_join(catch_long, region_defs, by = c("Region" = "code"))
+
+head(catch_joined)
+```
+
+an alternate way to do it is to change the name of the codes column first, and then it's a little simpler to join
+```{r}
+region_defs <- region_defs %>% 
+  rename(Region = code, Region_Name = mgmtArea)
+
+catch_joined <- left_join(catch_long, region_defs, by = c("Region"))
+
+head(catch_joined)
+```
+
 ## split and combine values in columns
+
+Let’s make a new data.frame with fake data to illustrate this. Here we have a set of site identification codes with information about the island where the site is (the first 3 letters) and a site number (the 3 numbers). If we want to group and summarize by island, we need a column with just the island information.
+
 
 ```{r}
 sites_df <- data.frame(site = c("HAW-101",
@@ -185,9 +292,13 @@ sites_df <- data.frame(site = c("HAW-101",
 split_df <- sites_df %>% 
   separate(site, c("island", "site_number"), "-")
 
+# excercise they can do to split city names
+
 
 ```
 
+
+The unite() function does just the reverse of separate(). If we have a data.frame that contains columns for year, month, and day, we might want to unite these into a single date column.
 ```{r}
 date_df <- data.frame(
   year = c("1930", "1930", "1930"),
@@ -198,26 +309,29 @@ date_df
 
 dates_unite <- date_df %>% 
   unite(date, year, month, day, sep = "-")
+
 head(dates_unite)
 ```
 
 ## now all together
 
+We just ran through the various things we can do with dplyr and tidyr but if you’re wondering how this might look in a real analysis. Let’s look at that now:
+
 ```{r}
 catch_original <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
 
-mean_region <- catch_original %>% 
+mean_region <- catch_original %>%
   select(-All, -notesRegCode) %>% 
-  mutate(Chinook = if_else(condition = Chinook == "I",
-                           true = "1",
-                           false = Chinook),
-         Chinook = as.numeric(Chinook)) %>% 
-  pivot_longer(-c(Region, Year),
-               names_to = "species",
-               values_to = "catch") %>% 
+  mutate(Chinook = if_else(Chinook == "I", 
+                           "1", 
+                           Chinook)) %>% 
+  mutate(Chinook = as.numeric(Chinook)) %>% 
+  pivot_longer(-c(Region, Year), 
+               names_to = "species", 
+               values_to = "catch") %>%
   mutate(catch = catch * 1000) %>% 
   group_by(Region) %>% 
-  summarise(mean_catch = mean(catch)) %>% 
+  summarize(mean_catch = mean(catch)) %>% 
   arrange(desc(mean_catch))
 
 head(mean_region)
@@ -229,3 +343,13 @@ head(mean_region)
 ```{r}
 write_csv(mean_region, here::here("data/mean_catch_by_region.csv"))
 ```
+
+## Commit and Push to Github
+We have completed our lesson on Cleaning and Wrangling data. Before we break, let’s practice our Git workflow.
+
+Steps
+1. Save the .qmd you have been working on for this lesson.
+
+2. Render the Quarto file. This is a way to test everything in your code is working.
+
+3. Stage (Add) > Commit > Pull > Push
